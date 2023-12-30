@@ -1,0 +1,127 @@
+from tabulate import tabulate
+import mysql.connector
+from mysql.connector import Error
+import pandas as pd
+def create_server_connection(host_name, user_name, user_password):
+	connection=None
+	try:
+		connection=mysql.connector.connect(
+			host=host_name,
+			user=user_name,
+			password=user_password
+		)
+		print("My connection is successfull")
+	except Error as err:
+		print(f"Error:'{err}'")
+
+	return connection
+
+def create_database(connection, query):
+    cursor = connection.cursor()
+    try:
+        cursor.execute(query)
+        print("Database created successfully")
+    except Error as err:
+        print(f"Error: '{err}'")
+def create_db_connection(host_name, user_name, user_password, db_name):
+    connection = None
+    try:
+        connection = mysql.connector.connect(
+            host=host_name,
+            user=user_name,
+            passwd=user_password,
+            database=db_name
+        )
+        print("MySQL Database connection successful")
+    except Error as err:
+        print(f"Error: '{err}'")
+
+    return connection
+
+def execute_query(connection, query):
+    cursor = connection.cursor()
+    try:
+        cursor.execute(query)
+        connection.commit()
+        print("Query successful")
+    except Error as err:
+        print(f"Error: '{err}'")
+
+def read_query(connection, query):
+    cursor = connection.cursor()
+    result = None
+    try:
+        cursor.execute(query)
+        result = cursor.fetchall()
+        return result
+    except Error as err:
+        print(f"Error: '{err}'")
+
+connection=create_server_connection("localhost", "root","Mypassword_24!")
+
+delete_database="DROP DATABASE STOCKCORPACTION"
+execute_query(connection,delete_database)
+
+Create_database_query="CREATE DATABASE STOCKCORPACTION2"
+
+create_database(connection, Create_database_query)
+connection=create_db_connection("localhost","root","Mypassword_24!","STOCKCORPACTION2")
+
+Create_stock_table="""
+CREATE TABLE StocksUniverse(
+Stock_UID INT PRIMARY KEY,
+stock_Bbcode VARCHAR(10) NOT NULL,
+stock_Sedol VARCHAR(10) NOT NULL,
+stock_Isin VARCHAR(20),
+stock_longdescription VARCHAR(100)
+);
+"""
+execute_query(connection,Create_stock_table)
+
+Create_stock_staticdata="""
+CREATE TABLE Stockstatic(
+	Stock_UID INT PRIMARY KEY,
+	Sector VARCHAR(20),
+	Industry VARCHAR(20) NOT NULL,
+	Country VARCHAR(20) NOT NULL
+	);
+	"""
+execute_query(connection,Create_stock_staticdata)
+
+Create_stock_corpaction="""
+CREATE TABLE CorpActions(
+	Stock_UID INT PRIMARY KEY,
+	Date DATE, 
+	CACS VARCHAR(30) NOT NULL,
+	Stocksplit BOOLEAN
+	);
+	"""
+execute_query(connection,Create_stock_corpaction)
+
+pop_stock_table="""
+INSERT INTO StocksUniverse VALUES
+(125,'YAH US','765345','US67354333','YAHOO INC'),
+(146,'GOG US','46554564','US2541414545','GOOGLE INC'),
+(158,'MSS US','2514145','US874235564','MICROSOFT INC');
+"""
+execute_query(connection,pop_stock_table)
+pop_stock_static="""
+INSERT INTO Stockstatic VALUES
+(125,'Services','IT','US'),
+(146,'Services','Tech','US'),
+(158,'Services','IT','US');
+"""
+execute_query(connection,pop_stock_static)
+pop_stock_corp="""
+INSERT INTO CorpActions VALUES
+(125,'2023-12-18','Stock split',TRUE),
+(146,'2023-11-17','Right',FALSE);
+execute_query(connection,pop_stock_corp)
+"""
+
+q5="""
+SELECT *
+FROM StocksUniverse
+"""
+results=read_query(connection,q5)
+print(tabulate(results,headers=["stock_id","name","corpaction"]))
